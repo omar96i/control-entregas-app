@@ -18,10 +18,45 @@ export type TrackPoint = {
 let queue: TrackPoint[] = [];
 let activeOrderId: number | null = null;
 let flushing = false;
+let running = false;
+
+export type TrackEvent = {
+  at: string;
+  kind: 'send-ok' | 'send-error' | 'start' | 'stop' | 'perm' | 'voy';
+  detail: string;
+};
+
+const MAX_EVENTS = 80;
+let events: TrackEvent[] = [];
+let sentTotal = 0;
+let lastSendAt: string | null = null;
+let lastError: string | null = null;
+
+function log(kind: TrackEvent['kind'], detail: string) {
+  const at = new Date().toISOString();
+  events = [{ at, kind, detail }, ...events].slice(0, MAX_EVENTS);
+  console.log(`[tracking] ${at.slice(11, 19)} ${kind}: ${detail}`);
+}
+
+export function getTrackingLog(): TrackEvent[] {
+  return events;
+}
+
+export function getTrackingStatus() {
+  return {
+    running,
+    lastSendAt,
+    sentTotal,
+    queued: queue.length,
+    lastError,
+    orderId: activeOrderId,
+  };
+}
 
 /** Pedido al que se atribuyen los puntos (el marcado con «Voy»). */
 export function setTrackingOrder(id: number | null) {
   activeOrderId = id;
+  log('voy', id === null ? 'pedido liberado → tiempo libre' : `pedido ${id} marcado (Voy)`);
 }
 
 export function getTrackingOrder(): number | null {
@@ -53,10 +88,18 @@ async function flushQueue() {
   flushing = true;
   try {
     const batch = queue.slice(0, 100);
+    const ctx = batch.some((p) => p.order_id != null)
+      ? `pedido ${[...new Set(batch.map((p) => p.order_id).filter((x) => x != null))].join(',')}`
+      : 'tiempo libre';
     await api.trackingPoints(batch);
     queue = queue.slice(batch.length);
-  } catch {
-    // Sin red: se conserva la cola para el próximo ciclo.
+    sentTotal += batch.length;
+    lastSendAt = new Date().toISOString();
+    lastError = null;
+    log('send-ok', `${batch.length} pts → back · ${ctx}`);
+  } catch (e: any) {
+    lastError = e?.message ?? 'Error de red';
+    log('send-error', `${lastError} · quedan ${queue.length} en cola`);
   } finally {
     flushing = false;
   }
@@ -68,15 +111,22 @@ export async function flushTracking() {
 
 export async function ensureTrackingPermissions(): Promise<{ fg: boolean; bg: boolean }> {
   const fg = await Location.requestForegroundPermissionsAsync();
-  if (!fg.granted) return { fg: false, bg: false };
+  if (!fg.granted) {
+    log('perm', 'permiso de ubicación en primer plano denegado');
+    return { fg: false, bg: false };
+  }
   const bg = await Location.requestBackgroundPermissionsAsync();
+  if (!bg.granted) log('perm', 'permiso en segundo plano denegado (se necesita "Permitir siempre")');
   return { fg: true, bg: bg.granted };
 }
 
 export async function startTracking(): Promise<void> {
   if (Platform.OS === 'web') return;
   const started = await Location.hasStartedLocationUpdatesAsync(TRACK_TASK).catch(() => false);
-  if (started) return;
+  if (started) {
+    running = true;
+    return;
+  }
   await Location.startLocationUpdatesAsync(TRACK_TASK, {
     accuracy: Location.Accuracy.High,
     timeInterval: TRACK_INTERVAL_MS,
@@ -87,6 +137,8 @@ export async function startTracking(): Promise<void> {
       notificationBody: 'Compartiendo tu ubicación con la central.',
     },
   });
+  running = true;
+  log('start', 'rastreo iniciado · envío cada 30 s');
 }
 
 export async function stopTracking(): Promise<void> {
@@ -96,7 +148,9 @@ export async function stopTracking(): Promise<void> {
       await Location.stopLocationUpdatesAsync(TRACK_TASK).catch(() => {});
     }
   }
+  running = false;
   queue = [];
+  log('stop', 'rastreo detenido');
 }
 
 export async function isTrackingActive(): Promise<boolean> {
