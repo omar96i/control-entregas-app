@@ -21,9 +21,11 @@ const KIND_TXT: Record<TrackEvent['kind'], string> = {
 
 export default function Perfil() {
   const { user, logout } = useAuth();
-  const { jornada, queue, delivered, iniciarJornada, finalizarJornada, refreshing, refresh } = useOrders();
+  const { jornada, queue, delivered, iniciarJornada, finalizarJornada, activarTracking, refreshing, refresh } = useOrders();
   const insets = useSafeAreaInsets();
   const [busy, setBusy] = useState(false);
+  const [actBusy, setActBusy] = useState(false);
+  const [actMsg, setActMsg] = useState<string | null>(null);
   const initials = String(user?.name ?? '??').split(' ').map((w) => w[0]).join('').slice(0, 2).toUpperCase();
   const iniciada = !!jornada?.inicio_en;
   const enCurso = iniciada && !jornada?.fin_en;
@@ -97,6 +99,32 @@ export default function Perfil() {
           Último envío: {hora(track.lastSendAt)} · Enviados: {track.sentTotal} · En cola: {track.queued}
         </Text>
         {track.lastError ? <Text style={styles.err}>⚠ {track.lastError}</Text> : null}
+        {!track.running ? (
+          <View style={{ gap: 6 }}>
+            <Text style={styles.warn}>
+              {enCurso
+                ? 'El envío está detenido: la central no te ve aunque estés libre. Actívalo y elige "Permitir siempre".'
+                : 'Activa el envío para que la central te vea durante la jornada.'}
+            </Text>
+            <Pressable
+              style={styles.primary}
+              disabled={actBusy}
+              onPress={async () => {
+                setActBusy(true);
+                setActMsg(null);
+                try {
+                  const r = await activarTracking();
+                  setActMsg((r.ok ? '✓ ' : '⚠ ') + r.message);
+                } finally {
+                  setActBusy(false);
+                }
+              }}
+            >
+              <Text style={styles.primaryTxt}>{actBusy ? 'Activando…' : '📡 Activar envío de ubicación'}</Text>
+            </Pressable>
+            {actMsg && <Text style={styles.muted}>{actMsg}</Text>}
+          </View>
+        ) : null}
         <Pressable style={styles.ghostSm} onPress={() => setLogOpen(true)}>
           <Text style={styles.ghostTxt}>Ver registro de envíos</Text>
         </Pressable>
@@ -161,6 +189,7 @@ const styles = StyleSheet.create({
   tstate: { color: theme.text, fontSize: 13, fontWeight: '800' },
   tctx: { color: theme.primary, fontSize: 11, fontWeight: '800', marginLeft: 'auto' },
   err: { color: '#b4232a', fontSize: 11, fontWeight: '700', textAlign: 'center' },
+  warn: { color: '#9a651f', backgroundColor: '#fff0d8', fontSize: 11, fontWeight: '700', borderRadius: 10, padding: 10, textAlign: 'center' },
   backdrop: { flex: 1, backgroundColor: 'rgba(15,45,50,0.3)', justifyContent: 'flex-end' },
   sheet: { backgroundColor: '#fbfdfd', borderTopLeftRadius: 24, borderTopRightRadius: 24, paddingHorizontal: 22, paddingTop: 14, gap: 12, maxHeight: '80%' },
   sheetHead: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },

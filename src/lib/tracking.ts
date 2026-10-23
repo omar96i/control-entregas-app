@@ -135,6 +135,7 @@ export async function startTracking(): Promise<void> {
     foregroundService: {
       notificationTitle: 'Control de Entregas · En jornada',
       notificationBody: 'Compartiendo tu ubicación con la central.',
+      killServiceOnDestroy: false,
     },
   });
   running = true;

@@ -33,6 +33,7 @@ type Store = {
   completeOrder: (id: number, payload: CompletePayload) => Promise<{ ok: boolean; error?: string }>;
   requestReassign: (id: number, motivo: string) => Promise<{ ok: boolean; error?: string }>;
   voyOrder: (id: number) => Promise<{ ok: boolean; error?: string }>;
+  activarTracking: () => Promise<{ ok: boolean; message: string }>;
   updateOrderLocation: (id: number, lat: number, lng: number) => Promise<{ ok: boolean; error?: string }>;
   iniciarJornada: () => Promise<{ tracking: 'ok' | 'sin-permiso' | 'error' }>;
   finalizarJornada: () => Promise<void>;
@@ -231,6 +232,21 @@ export function OrdersProvider({ children }: { children: ReactNode }) {
     [refresh],
   );
 
+  const activarTracking = useCallback(async (): Promise<{ ok: boolean; message: string }> => {
+    try {
+      const p = await ensureTrackingPermissions();
+      if (!p.fg) return { ok: false, message: 'Sin permiso de ubicación. Actívalo en Ajustes.' };
+      if (!p.bg) {
+        return { ok: false, message: 'Elige "Permitir siempre" en Ajustes para enviar en segundo plano.' };
+      }
+      await startTracking();
+      await refresh();
+      return { ok: true, message: 'Envío de ubicación activado.' };
+    } catch (e: any) {
+      return { ok: false, message: e.message ?? 'No se pudo activar.' };
+    }
+  }, [refresh]);
+
   const updateOrderLocation = useCallback(
     async (id: number, lat: number, lng: number) => {
       try {
@@ -267,13 +283,14 @@ export function OrdersProvider({ children }: { children: ReactNode }) {
       requestReassign,
       updateOrderLocation,
       voyOrder,
+      activarTracking,
       iniciarJornada,
       finalizarJornada,
     }),
     [
       customers, orders, queue, delivered, jornada, historial, loading, refreshing,
       selectedId, selected, selectOrder, refresh, reorderQueue, moveOrder,
-      promoteToPrincipal, completeOrder, requestReassign, updateOrderLocation, voyOrder, iniciarJornada, finalizarJornada,
+      promoteToPrincipal, completeOrder, requestReassign, updateOrderLocation, voyOrder, activarTracking, iniciarJornada, finalizarJornada,
     ],
   );
 
