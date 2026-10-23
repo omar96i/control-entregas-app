@@ -1,5 +1,5 @@
-import { useCallback, useState } from 'react';
-import { Linking, Pressable, RefreshControl, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { useCallback, useEffect, useRef, useState } from 'react';
+import { Animated, Easing, Linking, Pressable, RefreshControl, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useFocusEffect } from 'expo-router';
 import DraggableFlatList, { ScaleDecorator } from 'react-native-draggable-flatlist';
@@ -28,6 +28,21 @@ export default function Mapa() {
   const [voyBusy, setVoyBusy] = useState(false);
   const [voyErr, setVoyErr] = useState<string | null>(null);
   const [completing, setCompleting] = useState<Order | null>(null);
+
+  const pulse = useRef(new Animated.Value(0)).current;
+  useEffect(() => {
+    const anim = Animated.loop(
+      Animated.sequence([
+        Animated.timing(pulse, { toValue: 1, duration: 850, easing: Easing.inOut(Easing.ease), useNativeDriver: true }),
+        Animated.timing(pulse, { toValue: 0, duration: 850, easing: Easing.inOut(Easing.ease), useNativeDriver: true }),
+      ]),
+    );
+    anim.start();
+    return () => anim.stop();
+  }, [pulse]);
+  const glow = pulse.interpolate({ inputRange: [0, 1], outputRange: [0.25, 0.9] });
+  const beat = pulse.interpolate({ inputRange: [0, 1], outputRange: [1, 1.14] });
+  const blink = pulse.interpolate({ inputRange: [0, 1], outputRange: [1, 0.15] });
   const insets = useSafeAreaInsets();
   const navigation_user = user?.name?.split(' ')[0] ?? 'repartidor';
 
@@ -123,11 +138,17 @@ export default function Mapa() {
       ) : null}
 
       {focusOrder ? (
-        <View style={styles.hero}>
-          <View style={styles.heroTop}>
-            <View style={[styles.heroPos, { backgroundColor: priorityColor(focusPos) }]}>
-              <Text style={styles.heroPosTxt}>{focusPos}</Text>
+        <View>
+          <Animated.View pointerEvents="none" style={[styles.halo, { opacity: glow }]} />
+          <View style={styles.hero}>
+            <View style={styles.liveRow}>
+              <Animated.View style={[styles.liveDot, { opacity: blink }]} />
+              <Text style={styles.liveTxt}>{focusOrder.en_ruta_en ? 'EN CURSO · EN VIVO' : 'SIGUIENTE EN LA COLA'}</Text>
             </View>
+            <View style={styles.heroTop}>
+              <Animated.View style={[styles.heroPos, { backgroundColor: priorityColor(focusPos), transform: [{ scale: beat }] }]}>
+                <Text style={styles.heroPosTxt}>{focusPos}</Text>
+              </Animated.View>
             <View style={{ flex: 1 }}>
               <Text style={styles.heroCode}>
                 {focusOrder.code} · {focusOrder.en_ruta_en ? '🛵 En curso' : 'Siguiente'}
@@ -290,6 +311,10 @@ const styles = StyleSheet.create({
   jstartTxt: { color: '#fff', fontWeight: '800', fontSize: 14 },
   warn: { color: '#9a651f', backgroundColor: '#fff0d8', fontSize: 11, fontWeight: '700', borderRadius: 10, padding: 10 },
   hero: { backgroundColor: '#fff', borderWidth: 2, borderColor: theme.primary, borderRadius: 20, padding: 16, gap: 8 },
+  halo: { position: 'absolute', top: -5, left: -5, right: -5, bottom: -5, borderWidth: 3, borderColor: theme.primary, borderRadius: 24 },
+  liveRow: { flexDirection: 'row', gap: 7, alignItems: 'center', backgroundColor: '#0f2439', borderRadius: 9, paddingHorizontal: 10, paddingVertical: 7, alignSelf: 'flex-start' },
+  liveDot: { width: 9, height: 9, borderRadius: 5, backgroundColor: '#4ade80' },
+  liveTxt: { color: '#fff', fontSize: 10, fontWeight: '900', letterSpacing: 1.5 },
   heroTop: { flexDirection: 'row', gap: 10, alignItems: 'center' },
   heroPos: { width: 44, height: 44, borderRadius: 22, alignItems: 'center', justifyContent: 'center' },
   heroPosTxt: { color: '#fff', fontWeight: '800', fontSize: 18 },
