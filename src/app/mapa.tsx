@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { Animated, Easing, Linking, Pressable, RefreshControl, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useFocusEffect } from 'expo-router';
@@ -29,7 +29,7 @@ export default function Mapa() {
   const [voyErr, setVoyErr] = useState<string | null>(null);
   const [completing, setCompleting] = useState<Order | null>(null);
 
-  const pulse = useRef(new Animated.Value(0)).current;
+  const [pulse] = useState(() => new Animated.Value(0));
   useEffect(() => {
     const anim = Animated.loop(
       Animated.sequence([
@@ -182,6 +182,7 @@ export default function Mapa() {
               <Text style={styles.doneTxt}>✓ Completar</Text>
             </Pressable>
           </View>
+        </View>
         </View>
       ) : (
         <View style={styles.hero}>
