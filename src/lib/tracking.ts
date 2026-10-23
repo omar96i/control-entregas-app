@@ -4,7 +4,8 @@ import * as TaskManager from 'expo-task-manager';
 import { api } from './api';
 
 export const TRACK_TASK = 'control-entregas-location';
-export const TRACK_INTERVAL_MS = 30000;
+// Intervalo de envío (testeo: 5 s; producción: 30000).
+export const TRACK_INTERVAL_MS = 5000;
 
 export type TrackPoint = {
   lat: number;
@@ -130,7 +131,8 @@ export async function startTracking(): Promise<void> {
   await Location.startLocationUpdatesAsync(TRACK_TASK, {
     accuracy: Location.Accuracy.High,
     timeInterval: TRACK_INTERVAL_MS,
-    distanceInterval: 25,
+    // Sin filtro de distancia en testeo: envía aunque esté quieto.
+    distanceInterval: 0,
     pausesUpdatesAutomatically: false,
     foregroundService: {
       notificationTitle: 'Control de Entregas · En jornada',
@@ -139,7 +141,7 @@ export async function startTracking(): Promise<void> {
     },
   });
   running = true;
-  log('start', 'rastreo iniciado · envío cada 30 s');
+  log('start', `rastreo iniciado · envío cada ${TRACK_INTERVAL_MS / 1000} s`);
 }
 
 export async function stopTracking(): Promise<void> {

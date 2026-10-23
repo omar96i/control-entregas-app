@@ -4,6 +4,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import CompleteOrderSheet from '../components/CompleteOrderSheet';
 import AppMark from '../components/AppMark';
 import { cop } from '../lib/geo';
+import { hoy, hora } from '../lib/fecha';
 import { theme } from '../lib/theme';
 import type { Order } from '../lib/types';
 import { useOrders } from '../store/orders';
@@ -11,7 +12,7 @@ import { useOrders } from '../store/orders';
 const PIN_BG = ['#d8f6f1', '#e1eafc', '#fff0d8', '#f3e8ff', '#ffe4e6'];
 const PIN_TX = ['#267170', '#5b6cb3', '#9a651f', '#6d28d9', '#b4232a'];
 
-const today = () => new Date().toISOString().slice(0, 10);
+const today = () => hoy();
 
 export default function Pedidos() {
   const { orders, queue, refreshing, refresh, reorderQueue, completeOrder } = useOrders();
@@ -246,7 +247,7 @@ function OrderSheet({ order, onClose, onComplete }: { order: Order | null; onClo
           </View>
 
           {!delivered && enCamino && (
-            <Text style={styles.sentOk}>🛵 En camino desde {String(order.en_ruta_en).slice(11, 16)}</Text>
+            <Text style={styles.sentOk}>🛵 En camino desde {hora(order.en_ruta_en)}</Text>
           )}
           {!delivered && !enCamino && (order.estado === 'asignado' || order.estado === 'en_ruta') && (
             <Pressable style={styles.primary} onPress={doVoy} disabled={voyBusy}>

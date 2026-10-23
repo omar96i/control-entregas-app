@@ -5,11 +5,12 @@ import { Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 import { SafeAreaProvider, useSafeAreaInsets } from 'react-native-safe-area-context';
 import AppMark from '../components/AppMark';
 import { BoxIcon, CashIcon, RouteIcon, UserIcon } from '../components/TabBarIcon';
+import { hoy } from '../lib/fecha';
 import { theme } from '../lib/theme';
 import { AuthProvider, useAuth } from '../store/auth';
 import { OrdersProvider, useOrders } from '../store/orders';
 
-const today = () => new Date().toISOString().slice(0, 10);
+const today = () => hoy();
 
 function TabsWithInsets() {
   const insets = useSafeAreaInsets();

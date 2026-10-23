@@ -3,12 +3,11 @@ import { FlatList, Modal, Pressable, RefreshControl, ScrollView, StyleSheet, Tex
 import { useFocusEffect } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import AppMark from '../components/AppMark';
-import { getTrackingLog, getTrackingStatus, type TrackEvent } from '../lib/tracking';
+import { getTrackingLog, getTrackingStatus, TRACK_INTERVAL_MS, type TrackEvent } from '../lib/tracking';
+import { hora, horaSeg } from '../lib/fecha';
 import { theme } from '../lib/theme';
 import { useAuth } from '../store/auth';
 import { useOrders } from '../store/orders';
-
-const hora = (iso: string | null) => (iso ? iso.slice(11, 19) : '—');
 
 const KIND_TXT: Record<TrackEvent['kind'], string> = {
   'send-ok': 'Enviado',
@@ -72,7 +71,7 @@ export default function Perfil() {
       <View style={styles.card}>
         <Text style={styles.sec}>Jornada de hoy</Text>
         <Text style={styles.muted}>
-          {jornada ? `Estado: ${jornada.estado}${jornada.inicio_en ? ` · inicio ${String(jornada.inicio_en).slice(11, 16)}` : ''}` : 'Sin jornada registrada'}
+          {jornada ? `Estado: ${jornada.estado}${jornada.inicio_en ? ` · inicio ${hora(jornada.inicio_en)}` : ''}` : 'Sin jornada registrada'}
         </Text>
         <Text style={styles.muted}>{queue.length} en cola · {delivered.length} entregados</Text>
         {!iniciada ? (
@@ -92,7 +91,7 @@ export default function Perfil() {
         <Text style={styles.sec}>📡 Ubicación compartida</Text>
         <View style={styles.trow}>
           <View style={[styles.dot, { backgroundColor: track.running ? '#35c29c' : '#c3d4d2' }]} />
-          <Text style={styles.tstate}>{track.running ? 'Activa · cada 30 s' : 'Detenida'}</Text>
+          <Text style={styles.tstate}>{track.running ? `Activa · cada ${TRACK_INTERVAL_MS / 1000} s` : 'Detenida'}</Text>
           <Text style={styles.tctx}>{track.orderId ? `Pedido ${track.orderId}` : 'Tiempo libre'}</Text>
         </View>
         <Text style={styles.muted}>
@@ -147,7 +146,7 @@ export default function Perfil() {
               ListEmptyComponent={<Text style={styles.muted}>Sin eventos aún. Inicia jornada para empezar.</Text>}
               renderItem={({ item }) => (
                 <View style={styles.logRow}>
-                  <Text style={styles.logTime}>{hora(item.at)}</Text>
+                  <Text style={styles.logTime}>{horaSeg(item.at)}</Text>
                   <Text style={[styles.logKind, item.kind === 'send-error' ? styles.logBad : null]}>{KIND_TXT[item.kind]}</Text>
                   <Text style={styles.logDetail} numberOfLines={2}>{item.detail}</Text>
                 </View>

@@ -2,15 +2,11 @@ import { useEffect, useMemo, useState } from 'react';
 import { Modal, Pressable, RefreshControl, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { api } from '../lib/api';
+import { fechaLarga, hora } from '../lib/fecha';
 import { cop } from '../lib/geo';
 import { theme } from '../lib/theme';
 import type { Jornada } from '../lib/types';
 import { useOrders } from '../store/orders';
-
-function hora(iso?: string | null): string {
-  if (!iso) return '';
-  return String(iso).slice(11, 16);
-}
 
 export default function Caja() {
   const { delivered, queue, jornada, historial, refreshing, refresh, iniciarJornada, finalizarJornada } = useOrders();
@@ -42,7 +38,7 @@ export default function Caja() {
   const pct = totalDia > 0 ? Math.round((delivered.length / totalDia) * 100) : 0;
   const iniciada = !!jornada?.inicio_en;
   const enCurso = iniciada && !jornada?.fin_en;
-  const fecha = new Date().toLocaleDateString('es-CO', { weekday: 'long', day: 'numeric', month: 'long' });
+  const fecha = fechaLarga();
 
   return (
     <ScrollView

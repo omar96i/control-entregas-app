@@ -12,6 +12,7 @@ import PriorityCircles from '../components/PriorityCircles';
 import { PEREIRA_CENTER } from '../data/mock';
 import { fetchRoute, type RouteInfo } from '../lib/directions';
 import { cop, haversineKm } from '../lib/geo';
+import { fechaCorta, fechaLarga, hora } from '../lib/fecha';
 import { isTrackingActive } from '../lib/tracking';
 import { priorityColor, theme } from '../lib/theme';
 import type { Order } from '../lib/types';
@@ -20,13 +21,7 @@ import { useOrders } from '../store/orders';
 
 type LatLng = { latitude: number; longitude: number };
 
-const fechaHoy = () => {
-  try {
-    return new Date().toLocaleDateString('es-CO', { weekday: 'long', day: 'numeric', month: 'long' }).toUpperCase();
-  } catch {
-    return '';
-  }
-};
+const fechaHoy = () => fechaLarga().toUpperCase();
 
 export default function Mapa() {
   const { user } = useAuth();
@@ -333,7 +328,7 @@ export default function Mapa() {
         <View style={styles.jbar}>
           <View style={styles.dot} />
           <Text style={styles.jbarTxt}>
-            Jornada en curso{ jornada.inicio_en ? ` desde ${String(jornada.inicio_en).slice(11, 16)}` : ''} · {queue.length} en ruta{sharing ? ' · 📡 compartiendo ubicación' : ''}
+            Jornada en curso{ jornada.inicio_en ? ` desde ${hora(jornada.inicio_en)}` : ''} · {queue.length} en ruta{sharing ? ' · 📡 compartiendo ubicación' : ''}
           </Text>
         </View>
       ) : !iniciada ? (
@@ -413,7 +408,7 @@ export default function Mapa() {
             <Text style={styles.eyebrow}>Estado del día</Text>
             <Text style={styles.h2}>Tu jornada en números</Text>
           </View>
-          <Text style={styles.dateBadge}>{new Date().toLocaleDateString('es-CO', { day: 'numeric', month: 'short' }).toUpperCase()}</Text>
+          <Text style={styles.dateBadge}>{fechaCorta().toUpperCase()}</Text>
         </View>
         <View style={styles.stats}>
           <View style={styles.stat}>
