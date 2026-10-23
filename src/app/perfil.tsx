@@ -63,7 +63,7 @@ export default function Perfil() {
         <Text style={styles.muted}>{user?.email}</Text>
         <View style={styles.tags}>
           <Text style={styles.tag}>{user?.role === 'admin' ? 'Admin' : 'Repartidor activo'}</Text>
-          {user?.zona?.nombre ? <Text style={styles.tag}>Zona {user.zona.nombre}</Text> : null}
+          {user?.zona ? <Text style={styles.tag}>Zona {user.zona}</Text> : null}
           {user?.telefono ? <Text style={styles.tag}>📞 {user.telefono}</Text> : null}
         </View>
       </View>

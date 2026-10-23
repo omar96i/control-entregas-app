@@ -132,9 +132,9 @@ export default function Pedidos() {
         order={completing}
         position={completing ? queue.findIndex((o) => o.id === completing.id) + 1 : 1}
         onClose={() => setCompleting(null)}
-        onConfirm={async ({ firma, firmado_por, metodo_pago_final }) => {
+        onConfirm={async ({ firma, firmado_por, foto, metodo_pago_final }) => {
           if (!completing) return 'Sin pedido.';
-          const r = await completeOrder(completing.id, { firma, firmado_por, metodo_pago_final });
+          const r = await completeOrder(completing.id, { firma, firmado_por, foto, metodo_pago_final });
           return r.ok ? null : (r.error ?? 'No se pudo completar.');
         }}
       />

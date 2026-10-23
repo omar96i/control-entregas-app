@@ -74,10 +74,10 @@ export const api = {
   customers: async () => list<any>(await req(`/customers?per_page=100`)),
   reorder: (order_ids: number[]) =>
     req<any>(`/orders-reorder`, { method: 'PATCH', body: JSON.stringify({ order_ids }) }),
-  complete: (orderId: number, firma: string, firmado_por: string, metodo_pago_final: string) =>
+  complete: (orderId: number, firma: string, firmado_por: string, metodo_pago_final: string, foto: string) =>
     req<any>(`/orders/${orderId}/complete`, {
       method: 'POST',
-      body: JSON.stringify({ firma, firmado_por, metodo_pago_final }),
+      body: JSON.stringify({ firma, firmado_por, metodo_pago_final, foto }),
     }),
   requestReassign: (orderId: number, motivo: string) =>
     req<any>(`/orders/${orderId}/request-reassign`, {

@@ -12,7 +12,7 @@ import {
 import type { Customer, Jornada, Order } from '../lib/types';
 import { useAuth } from './auth';
 
-export type CompletePayload = { firma: string; firmado_por: string; metodo_pago_final: string };
+export type CompletePayload = { firma: string; firmado_por: string; foto: string; metodo_pago_final: string };
 
 type Store = {
   customers: Customer[];
@@ -157,9 +157,11 @@ export function OrdersProvider({ children }: { children: ReactNode }) {
       if (!payload.firmado_por.trim()) return { ok: false, error: 'Escribe quién recibe el pedido.' };
       if (!payload.firma || payload.firma.length < 10)
         return { ok: false, error: 'La firma del cliente es obligatoria.' };
+      if (!payload.foto || payload.foto.length < 100)
+        return { ok: false, error: 'La foto comprobante es obligatoria.' };
       if (!payload.metodo_pago_final) return { ok: false, error: 'Confirma si pagó en efectivo o transferencia.' };
       try {
-        await api.complete(id, payload.firma, payload.firmado_por.trim(), payload.metodo_pago_final);
+        await api.complete(id, payload.firma, payload.firmado_por.trim(), payload.metodo_pago_final, payload.foto);
         if (getTrackingOrder() === id) setTrackingOrder(null);
         await refresh();
         return { ok: true };

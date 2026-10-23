@@ -39,6 +39,7 @@ export type Order = {
   /** Trazo de firma (data-uri svg o puntos serializados). Obligatoria al completar. */
   firma?: string | null;
   firmado_por?: string | null;
+  foto?: string | null;
   entregado_en?: string | null;
   /** Hora en que el conductor tocó «Voy a este pedido». */
   en_ruta_en?: string | null;
@@ -63,6 +64,5 @@ export type AuthUser = {
   email: string;
   role: string;
   telefono?: string | null;
-  zona_id?: number | null;
-  zona?: { id: number; nombre: string } | null;
+  zona?: string | null;
 };

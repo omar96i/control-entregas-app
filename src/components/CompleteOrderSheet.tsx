@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
-import { Modal, Pressable, StyleSheet, Text, TextInput, useWindowDimensions, View } from 'react-native';
+import { Image, Modal, Pressable, StyleSheet, Text, TextInput, useWindowDimensions, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import * as ImagePicker from 'expo-image-picker';
 import * as ScreenOrientation from 'expo-screen-orientation';
 import { cop } from '../lib/geo';
 import { theme } from '../lib/theme';
@@ -12,7 +13,7 @@ type Props = {
   order: Order | null;
   position: number;
   onClose: () => void;
-  onConfirm: (payload: { firma: string; firmado_por: string; metodo_pago_final: string }) => Promise<string | null> | string | null;
+  onConfirm: (payload: { firma: string; firmado_por: string; foto: string; metodo_pago_final: string }) => Promise<string | null> | string | null;
 };
 
 /**
@@ -23,6 +24,8 @@ export default function CompleteOrderSheet({ visible, order, position, onClose, 
   const [strokes, setStrokes] = useState<Stroke[]>([]);
   const [nombre, setNombre] = useState('');
   const [pago, setPago] = useState<'efectivo' | 'transferencia'>('efectivo');
+  const [foto, setFoto] = useState<string | null>(null);
+  const [tomando, setTomando] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [key, setKey] = useState(0);
   const [landscape, setLandscape] = useState(false);
@@ -55,12 +58,38 @@ export default function CompleteOrderSheet({ visible, order, position, onClose, 
   const close = () => {
     setStrokes([]);
     setNombre('');
+    setFoto(null);
     setError(null);
     setSending(false);
+    setTomando(false);
     setKey((k) => k + 1);
     setLandscape(false);
     ScreenOrientation.lockAsync(ScreenOrientation.OrientationLock.PORTRAIT_UP).catch(() => {});
     onClose();
+  };
+
+  const tomarFoto = async (camara: boolean) => {
+    setTomando(true);
+    setError(null);
+    try {
+      const perm = camara
+        ? await ImagePicker.requestCameraPermissionsAsync()
+        : await ImagePicker.requestMediaLibraryPermissionsAsync();
+      if (!perm.granted) {
+        setError('Sin permiso de cámara/galería.');
+        return;
+      }
+      const r = camara
+        ? await ImagePicker.launchCameraAsync({ quality: 0.4, base64: true })
+        : await ImagePicker.launchImageLibraryAsync({ mediaTypes: ['images'], quality: 0.4, base64: true });
+      if (r.canceled || !r.assets?.[0]?.base64) return;
+      const mime = r.assets[0].mimeType ?? 'image/jpeg';
+      setFoto(`data:${mime};base64,${r.assets[0].base64}`);
+    } catch (e: any) {
+      setError(e.message ?? 'No se pudo tomar la foto.');
+    } finally {
+      setTomando(false);
+    }
   };
 
   const confirm = async () => {
@@ -73,8 +102,12 @@ export default function CompleteOrderSheet({ visible, order, position, onClose, 
       setError('La firma del cliente es obligatoria. Pídele que firme con el dedo.');
       return;
     }
+    if (!foto) {
+      setError('La foto comprobante es obligatoria. Tómala con la cámara.');
+      return;
+    }
     setSending(true);
-    const err = await onConfirm({ firma: strokesToData(strokes), firmado_por: nombre.trim(), metodo_pago_final: pago });
+    const err = await onConfirm({ firma: strokesToData(strokes), firmado_por: nombre.trim(), foto, metodo_pago_final: pago });
     setSending(false);
     if (err) {
       setError(err);
@@ -141,6 +174,29 @@ export default function CompleteOrderSheet({ visible, order, position, onClose, 
             {!horizontal && (
               <Text style={styles.hint}>Para más espacio, gira a horizontal con el botón 🔄.</Text>
             )}
+            <Text style={[styles.label, { marginTop: 10 }]}>Foto comprobante *</Text>
+            {foto ? (
+              <View style={{ gap: 8, marginTop: 6 }}>
+                <Image source={{ uri: foto }} style={styles.preview} />
+                <View style={{ flexDirection: 'row', gap: 8 }}>
+                  <Pressable style={[styles.mini, { flex: 1, alignItems: 'center' }]} onPress={() => tomarFoto(true)} disabled={tomando}>
+                    <Text style={styles.miniTxt}>↺ Tomar otra</Text>
+                  </Pressable>
+                  <Pressable style={[styles.mini, { flex: 1, alignItems: 'center' }]} onPress={() => setFoto(null)}>
+                    <Text style={styles.miniTxt}>✕ Quitar</Text>
+                  </Pressable>
+                </View>
+              </View>
+            ) : (
+              <View style={{ flexDirection: 'row', gap: 8, marginTop: 6 }}>
+                <Pressable style={[styles.mini, { flex: 1, alignItems: 'center' }]} onPress={() => tomarFoto(true)} disabled={tomando}>
+                  <Text style={styles.miniTxt}>{tomando ? 'Abriendo…' : '📷 Cámara'}</Text>
+                </Pressable>
+                <Pressable style={[styles.mini, { flex: 1, alignItems: 'center' }]} onPress={() => tomarFoto(false)} disabled={tomando}>
+                  <Text style={styles.miniTxt}>🖼️ Galería</Text>
+                </Pressable>
+              </View>
+            )}
           </View>
 
           <View style={styles.padWrap}>
@@ -189,6 +245,7 @@ const styles = StyleSheet.create({
   mini: { backgroundColor: theme.surface, borderWidth: 1, borderColor: theme.border, borderRadius: 8, paddingHorizontal: 10, paddingVertical: 7 },
   miniTxt: { color: theme.text, fontSize: 12, fontWeight: '700' },
   hint: { color: theme.muted, fontSize: 11, marginTop: 6 },
+  preview: { width: '100%', height: 180, borderRadius: 12, backgroundColor: '#e8efee' },
   padWrap: { flex: 1, minHeight: 220, justifyContent: 'center' },
   pad: { flex: 1 },
   padHint: { position: 'absolute', alignSelf: 'center', color: '#475569', fontSize: 15, fontStyle: 'italic' },
