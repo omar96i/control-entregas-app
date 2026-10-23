@@ -158,6 +158,17 @@ export default function Mapa() {
             <Text style={styles.heroTotal}>{cop(focusOrder.total)}</Text>
           </View>
           <Text style={styles.heroAddr}>📍 {focusOrder.address_snapshot}</Text>
+          <View style={styles.aprox}>
+            <Text style={styles.aproxTxt}>Ubicación aproximada, no es la real. Si tienes duda, avisa al cliente antes de salir.</Text>
+            <View style={{ flexDirection: 'row', gap: 8, marginTop: 6 }}>
+              <Pressable style={[styles.mini, { flex: 1, alignItems: 'center' }]} onPress={() => Linking.openURL(`tel:${focusOrder.customer?.telefono}`)}>
+                <Text style={styles.miniTxt}>📞 Avisar al cliente</Text>
+              </Pressable>
+              <Pressable style={[styles.mini, { flex: 1, alignItems: 'center' }]} onPress={() => navigateAddr(focusOrder.address_snapshot)}>
+                <Text style={styles.miniTxt}>🧭 Ver en Maps</Text>
+              </Pressable>
+            </View>
+          </View>
           <Text style={styles.heroItems}>📦 {(focusOrder.items ?? []).map((it) => `${it.qty}× ${it.nombre}`).join(', ')}</Text>
           <Text style={styles.mutedSm}>
             {pagoHero ? `💳 ${pagoHero}` : '💳 por confirmar'}{focusOrder.ventana_entrega ? ` · 🕐 ${focusOrder.ventana_entrega}` : ''}
@@ -172,9 +183,6 @@ export default function Mapa() {
           ) : null}
           {voyErr && <Text style={styles.voyErr}>{voyErr}</Text>}
           <View style={styles.heroActions}>
-            <Pressable style={styles.nav} onPress={() => navigateAddr(focusOrder.address_snapshot)}>
-              <Text style={styles.navTxt}>🧭 Cómo llegar</Text>
-            </Pressable>
             <Pressable style={styles.call} onPress={() => Linking.openURL(`tel:${focusOrder.customer?.telefono}`)}>
               <Text style={styles.callTxt}>📞</Text>
             </Pressable>
@@ -325,6 +333,10 @@ const styles = StyleSheet.create({
   heroAddr: { color: '#304f54', fontSize: 14 },
   heroItems: { color: theme.faint, fontSize: 12 },
   heroNotes: { color: theme.muted, fontSize: 12, fontStyle: 'italic' },
+  aprox: { backgroundColor: '#fff9ef', borderWidth: 1, borderColor: '#e9c88f', borderRadius: 12, padding: 10 },
+  aproxTxt: { color: '#9a651f', fontSize: 11, fontWeight: '700' },
+  mini: { backgroundColor: '#fff', borderWidth: 1, borderColor: theme.border, borderRadius: 8, paddingHorizontal: 10, paddingVertical: 8 },
+  miniTxt: { color: theme.text, fontSize: 12, fontWeight: '700' },
   voy: { backgroundColor: theme.navy, borderRadius: 12, padding: 14, alignItems: 'center' },
   voyTxt: { color: '#fff', fontWeight: '800', fontSize: 14 },
   voyOk: { color: '#147a5b', backgroundColor: '#e1f6ee', fontSize: 11, fontWeight: '800', borderRadius: 8, padding: 8 },
