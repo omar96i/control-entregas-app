@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { Image, Modal, Pressable, StyleSheet, Text, TextInput, useWindowDimensions, View } from 'react-native';
+import { Image, Modal, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import * as ImagePicker from 'expo-image-picker';
 import * as ScreenOrientation from 'expo-screen-orientation';
@@ -30,13 +30,10 @@ export default function CompleteOrderSheet({ visible, order, position, onClose, 
   const [foto, setFoto] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [key, setKey] = useState(0);
-  const [landscape, setLandscape] = useState(false);
   const [sending, setSending] = useState(false);
   const [tomando, setTomando] = useState(false);
   const wasVisible = useRef(false);
   const insets = useSafeAreaInsets();
-  const { width, height } = useWindowDimensions();
-  const horizontal = width > height;
 
   // Al abrir, siempre empieza en el paso 1 limpio.
   useEffect(() => {
@@ -56,22 +53,7 @@ export default function CompleteOrderSheet({ visible, order, position, onClose, 
     }
   }, [visible]);
 
-  const toggleOrientation = async () => {
-    try {
-      if (landscape) {
-        await ScreenOrientation.lockAsync(ScreenOrientation.OrientationLock.PORTRAIT_UP);
-        setLandscape(false);
-      } else {
-        await ScreenOrientation.lockAsync(ScreenOrientation.OrientationLock.LANDSCAPE);
-        setLandscape(true);
-      }
-    } catch {
-      setError('No se pudo girar la pantalla en este dispositivo.');
-    }
-  };
-
   const close = () => {
-    setLandscape(false);
     ScreenOrientation.lockAsync(ScreenOrientation.OrientationLock.PORTRAIT_UP).catch(() => {});
     onClose();
   };
@@ -192,21 +174,13 @@ export default function CompleteOrderSheet({ visible, order, position, onClose, 
           <View style={[styles.card, { flex: 1 }]}>
             <View style={styles.padHead}>
               <Text style={styles.cardTitle}>✍️ Firma del cliente</Text>
-              <View style={{ flexDirection: 'row', gap: 8 }}>
-                <Pressable style={styles.mini} onPress={toggleOrientation}>
-                  <Text style={styles.miniTxt}>{landscape ? '📱 Vertical' : '🔄 Horizontal'}</Text>
-                </Pressable>
-                <Pressable
-                  style={styles.mini}
-                  onPress={() => { setStrokes([]); setKey((k) => k + 1); }}
-                >
-                  <Text style={styles.miniTxt}>↺ Limpiar</Text>
-                </Pressable>
-              </View>
+              <Pressable
+                style={styles.mini}
+                onPress={() => { setStrokes([]); setKey((k) => k + 1); }}
+              >
+                <Text style={styles.miniTxt}>↺ Limpiar</Text>
+              </Pressable>
             </View>
-            {!horizontal && (
-              <Text style={styles.hint}>Para más espacio, gira a horizontal con el botón 🔄.</Text>
-            )}
             <View style={styles.padWrap}>
               <SignaturePad
                 key={key}
