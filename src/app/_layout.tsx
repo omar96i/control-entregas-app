@@ -36,7 +36,7 @@ function TabsWithInsets() {
       }}
     >
       <Tabs.Screen name="index" options={{ href: null }} />
-      <Tabs.Screen name="mapa" options={{ title: 'Mi ruta', tabBarLabel: 'Mi ruta', tabBarIcon: ({ color }) => <RouteIcon color={color} /> }} />
+      <Tabs.Screen name="mapa" options={{ title: 'En curso', tabBarLabel: 'En curso', tabBarIcon: ({ color }) => <RouteIcon color={color} /> }} />
       <Tabs.Screen name="pedidos" options={{ title: 'Mis pedidos', tabBarLabel: 'Pedidos', tabBarIcon: ({ color }) => <BoxIcon color={color} />, tabBarBadge: entrantes > 0 ? entrantes : undefined, tabBarBadgeStyle: { backgroundColor: '#f29b76' } }} />
       <Tabs.Screen name="caja" options={{ title: 'Mi caja', tabBarLabel: 'Mi caja', tabBarIcon: ({ color }) => <CashIcon color={color} /> }} />
       <Tabs.Screen name="perfil" options={{ title: 'Perfil', tabBarLabel: 'Perfil', tabBarIcon: ({ color }) => <UserIcon color={color} /> }} />
